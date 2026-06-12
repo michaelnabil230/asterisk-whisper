@@ -1,0 +1,13 @@
+{
+  "name": "sip",
+  "version": "1.0.0",
+  "description": "A SIP client implementation using SIP.js.",
+  "type": "module",
+  "scripts": {
+    "start": "vite"
+  },
+  "dependencies": {
+    "sip.js": "^0.21.2",
+    "vite": "^8.0.16"
+  }
+}

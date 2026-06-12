@@ -1,0 +1,17 @@
+# Node
+node_modules/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+# Environment
+.env
+
+# Logs
+*.log
