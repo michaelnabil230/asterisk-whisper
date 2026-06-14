@@ -134,6 +134,20 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
     }
 });
 
+document.getElementById("login1001Btn").addEventListener("click", () => {
+    document.getElementById("extension").value = "1001";
+    document.getElementById("password").value = "Password1001";
+    document.getElementById("target").value = "1002";
+    document.getElementById("loginBtn").click();
+});
+
+document.getElementById("login1002Btn").addEventListener("click", () => {
+    document.getElementById("extension").value = "1002";
+    document.getElementById("password").value = "Password1002";
+    document.getElementById("target").value = "1001";
+    document.getElementById("loginBtn").click();
+});
+
 document.getElementById("callBtn").addEventListener("click", async () => {
 
     const target = document.getElementById("target").value.trim();
