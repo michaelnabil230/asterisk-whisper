@@ -9,8 +9,8 @@ let userAgent;
 let registerer;
 let session;
 
-const SERVER = "10.10.10.30";
-const WSS_URL = "ws://10.10.10.30:8088/ws";
+const SERVER = "localhost";
+const WSS_URL = "wss://localhost:8089/ws";
 
 const status = document.getElementById("status");
 

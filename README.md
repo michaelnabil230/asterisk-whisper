@@ -279,6 +279,24 @@ These examples can be used as a starting point for:
 
 ---
 
+# Asterisk PBX Docker
+
+To quickly run an Asterisk instance for testing these examples, use the companion project:
+
+```bash
+git clone https://github.com/michaelnabil230/asterisk-pbx-docker
+cd asterisk-pbx-docker
+docker compose up -d
+```
+
+Repository:
+
+```text
+https://github.com/michaelnabil230/asterisk-pbx-docker
+```
+
+---
+
 # Manual Setup
 
 If you prefer not to use the Makefile:

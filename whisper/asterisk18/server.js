@@ -1,6 +1,6 @@
 const ari = require('ari-client');
 
-const ASTERISK_URL = 'http://127.0.0.1:8088';
+const ASTERISK_URL = 'https://localhost:8088';
 const USERNAME = 'node';
 const PASSWORD = 'secret123';
 

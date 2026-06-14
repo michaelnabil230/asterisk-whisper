@@ -120,7 +120,7 @@ Verify connectivity:
 
 ```bash
 curl -u node:secret123 \
-http://127.0.0.1:8088/ari/applications
+https://localhost:8088/ari/applications
 ```
 
 ---
@@ -265,7 +265,7 @@ Verify:
 
 ```bash
 curl -u node:secret123 \
-http://127.0.0.1:8088/ari/applications
+https://localhost:8088/ari/applications
 ```
 
 Check:
