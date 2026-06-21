@@ -9,26 +9,68 @@ let userAgent;
 let registerer;
 let session;
 
+window.sendDTMF = sendDTMF;
+function sendDTMF(digits) {
+
+    if (!session) {
+        return;
+    }
+
+    if (session.state !== SessionState.Established) {
+        return;
+    }
+
+    const sdh = session.sessionDescriptionHandler;
+
+    if (!sdh || typeof sdh.sendDtmf !== "function") {
+        console.error("DTMF not supported by this session");
+        return;
+    }
+
+    const sent = sdh.sendDtmf(digits, {
+        duration: 200,
+        interToneGap: 100
+    });
+
+    if (!sent) {
+        console.error("Failed to send DTMF");
+    }
+}
+
 const SERVER = "localhost";
 const WSS_URL = "wss://localhost:8089/ws";
 
 const status = document.getElementById("status");
 
-// Create audio element for remote audio
 const remoteAudio = document.createElement("audio");
 remoteAudio.autoplay = true;
 remoteAudio.controls = true;
+remoteAudio.muted = false;
+remoteAudio.volume = 1;
+
 document.body.appendChild(remoteAudio);
 
-function setupRemoteAudio(session) {
+async function requestMicrophone() {
+    return await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: false
+    });
+}
+
+function attachRemoteAudio(session) {
     const sdh = session.sessionDescriptionHandler;
 
-    if (!sdh || !sdh.peerConnection) {
-        console.error("No PeerConnection found");
+    if (!sdh) {
+        console.error("No SessionDescriptionHandler");
         return;
     }
 
     const pc = sdh.peerConnection;
+
+    if (!pc) {
+        console.error("No PeerConnection");
+        return;
+    }
 
     const remoteStream = new MediaStream();
 
@@ -40,11 +82,50 @@ function setupRemoteAudio(session) {
 
     remoteAudio.srcObject = remoteStream;
 
-    remoteAudio.play().catch((err) => {
-        console.error("Audio playback failed:", err);
-    });
+    remoteAudio.play()
+        .then(() => {
+            console.log("Remote audio playing");
+        })
+        .catch(console.error);
 
-    console.log("Remote audio attached");
+    console.log("Audio tracks:", remoteStream.getAudioTracks());
+}
+
+function bindSessionEvents(currentSession) {
+
+    currentSession.stateChange.addListener((state) => {
+
+        console.log("Session State:", state);
+
+        switch (state) {
+
+            case SessionState.Establishing:
+
+                status.innerText = "Connecting...";
+
+                break;
+
+            case SessionState.Established:
+
+                status.innerText = "Call Connected";
+
+                setTimeout(() => {
+                    attachRemoteAudio(currentSession);
+                }, 500);
+
+                break;
+
+            case SessionState.Terminated:
+
+                status.innerText = "Call Ended";
+
+                remoteAudio.srcObject = null;
+
+                session = null;
+
+                break;
+        }
+    });
 }
 
 document.getElementById("loginBtn").addEventListener("click", async () => {
@@ -53,6 +134,7 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
     const password = document.getElementById("password").value.trim();
 
     try {
+        await requestMicrophone();
 
         userAgent = new UserAgent({
             uri: UserAgent.makeURI(`sip:${extension}@${SERVER}`),
@@ -63,13 +145,6 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
 
             authorizationUsername: extension,
             authorizationPassword: password,
-
-            sessionDescriptionHandlerFactoryOptions: {
-                constraints: {
-                    audio: true,
-                    video: false
-                }
-            }
         });
 
         userAgent.delegate = {
@@ -84,35 +159,11 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
                     return;
                 }
 
-                await invitation.accept();
-
                 session = invitation;
 
-                session.stateChange.addListener((state) => {
+                bindSessionEvents(session);
 
-                    console.log("Incoming Call State:", state);
-
-                    switch (state) {
-
-                        case SessionState.Establishing:
-                            status.innerText = "Connecting...";
-                            break;
-
-                        case SessionState.Established:
-                            status.innerText = "Call Connected";
-
-                            setTimeout(() => {
-                                setupRemoteAudio(session);
-                            }, 1000);
-
-                            break;
-
-                        case SessionState.Terminated:
-                            status.innerText = "Call Ended";
-                            session = null;
-                            break;
-                    }
-                });
+                await invitation.accept();
             }
         };
 
@@ -124,8 +175,7 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
 
         status.innerText = "Registered";
 
-        console.log("Registered Successfully");
-
+        console.log("Registered");
     } catch (error) {
 
         console.error(error);
@@ -163,47 +213,9 @@ document.getElementById("callBtn").addEventListener("click", async () => {
             `sip:${target}@${SERVER}`
         );
 
-        session = new Inviter(userAgent, targetURI, {
-            sessionDescriptionHandlerOptions: {
-                constraints: {
-                    audio: true,
-                    video: false
-                }
-            }
-        });
+        session = new Inviter(userAgent, targetURI);
 
-        session.stateChange.addListener((state) => {
-
-            console.log("Outgoing Call State:", state);
-
-            switch (state) {
-
-                case SessionState.Initial:
-                    break;
-
-                case SessionState.Establishing:
-                    status.innerText = "Calling...";
-                    break;
-
-                case SessionState.Established:
-
-                    status.innerText = "Call Connected";
-
-                    setTimeout(() => {
-                        setupRemoteAudio(session);
-                    }, 1000);
-
-                    break;
-
-                case SessionState.Terminated:
-
-                    status.innerText = "Call Ended";
-
-                    session = null;
-
-                    break;
-            }
-        });
+        bindSessionEvents(session);
 
         await session.invite();
 
